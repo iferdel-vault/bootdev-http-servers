@@ -31,6 +31,8 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 }
 
 func main() {
+	const filepathRoot = "."
+	const port = "8080"
 
 	err := godotenv.Load()
 	if err != nil {
@@ -38,15 +40,20 @@ func main() {
 	}
 
 	dbURL := os.Getenv("DB_URL")
-	db, err := sql.Open("postgres", dbURL)
-	dbQueries := database.New(db)
+	if dbURL == "" {
+		log.Fatal("DB_URL must be set")
+	}
+
+	dbConn, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatalf("error opening connection to db: %v", err)
 	}
-	apiCfg := apiConfig{}
-	apiCfg.db = dbQueries
+	dbQueries := database.New(dbConn)
 
-	const port = "8080"
+	apiCfg := apiConfig{
+		fileserverHits: atomic.Int32{},
+		db:             dbQueries,
+	}
 
 	mux := http.NewServeMux() // serve mux is not a multiplexor per-se but a traffic director
 	server := http.Server{
@@ -54,7 +61,7 @@ func main() {
 		Handler: mux,
 	}
 
-	mux.Handle("/app/", http.StripPrefix("/app", apiCfg.middlewareMetricsInc(http.FileServer(http.Dir(".")))))
+	mux.Handle("/app/", http.StripPrefix("/app", apiCfg.middlewareMetricsInc(http.FileServer(http.Dir(filepathRoot)))))
 	mux.HandleFunc("GET /api/healthz", handlerReadiness)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerResetMetrics)
@@ -62,6 +69,4 @@ func main() {
 
 	fmt.Printf("serving on port %s\n", port)
 	log.Fatal(server.ListenAndServe())
-
-	return
 }

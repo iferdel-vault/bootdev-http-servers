@@ -1,14 +1,21 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"sync/atomic"
+
+	"github.com/iferdel-vault/bootdev-http-servers/internal/database"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 type apiConfig struct {
 	fileserverHits atomic.Int32
+	db             *database.Queries
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -25,7 +32,19 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 
 func main() {
 
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("error reading .env file: %v", err)
+	}
+
+	dbURL := os.Getenv("DB_URL")
+	db, err := sql.Open("postgres", dbURL)
+	dbQueries := database.New(db)
+	if err != nil {
+		log.Fatalf("error opening connection to db: %v", err)
+	}
 	apiCfg := apiConfig{}
+	apiCfg.db = dbQueries
 
 	const port = "8080"
 

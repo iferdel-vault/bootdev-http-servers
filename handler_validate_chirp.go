@@ -8,14 +8,15 @@ import (
 
 const ChirpMaxLength = 140
 
+// personal challenge: add middleware that logs whatever. maybe current time
+
 func handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
 
 	type parameters struct {
 		Body string `json:"body"`
 	}
 	type returnVals struct {
-		Valid bool   `json:"valid"`
-		Error string `json:"error"`
+		Valid bool `json:"valid"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -28,32 +29,13 @@ func handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(params.Body) > ChirpMaxLength {
-		respBody := returnVals{
-			Valid: false,
-			Error: "Chirp is too long",
-		}
-		dat, err := json.Marshal(respBody)
-		if err != nil {
-			log.Printf("Error marshalling JSON: %s", err)
-			w.WriteHeader(500)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(400)
-		w.Write(dat)
+		respondWithError(w, 400, "Chirp is too long")
+		return
 	}
 
 	respBody := returnVals{
 		Valid: true,
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-	dat, err := json.Marshal(respBody)
-	if err != nil {
-		log.Printf("Error marshalling JSON: %s", err)
-		w.WriteHeader(500)
-		return
-	}
-	w.Write(dat)
+	respondWithJSON(w, 200, respBody)
 	return
 }

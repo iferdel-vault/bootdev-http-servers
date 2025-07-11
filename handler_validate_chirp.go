@@ -42,7 +42,7 @@ func handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var cleanedBody string
+	cleanedBody := BadWordReplacement(params.Body)
 	respondWithJSON(w, 200, responseBody{
 		CleanedBody: cleanedBody,
 	})

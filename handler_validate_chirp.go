@@ -31,7 +31,7 @@ func handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
 	params := requestBody{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Chirp is too long", err)
+		respondWithError(w, http.StatusInternalServerError, "Something went wrong. Probably no chirp was stated in the body message", err)
 		return
 	}
 

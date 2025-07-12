@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -16,6 +17,13 @@ var ProfaneWords = map[string]bool{
 }
 
 // personal challenge: add middleware that logs whatever. maybe current time
+
+func middlewareValidateChirp(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println("someone asked for a validation of a chirp")
+		next(w, r)
+	}
+}
 
 func handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()

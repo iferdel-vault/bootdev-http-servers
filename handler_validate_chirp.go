@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strings"
 )
@@ -32,18 +31,17 @@ func handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
 	params := requestBody{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		log.Printf("Error decoding parameters: %s", err)
-		w.WriteHeader(500)
+		respondWithError(w, http.StatusInternalServerError, "Chirp is too long", err)
 		return
 	}
 
 	if len(params.Body) > ChirpMaxLength {
-		respondWithError(w, 400, "Chirp is too long")
+		respondWithError(w, http.StatusBadRequest, "Chirp is too long", nil)
 		return
 	}
 
 	cleanedBody := BadWordReplacement(params.Body)
-	respondWithJSON(w, 200, responseBody{
+	respondWithJSON(w, http.StatusOK, responseBody{
 		CleanedBody: cleanedBody,
 	})
 	return

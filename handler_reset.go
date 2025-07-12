@@ -1,24 +1,27 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"net/http"
 )
 
-func (apiCfg *apiConfig) handlerResetUsers(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
 
-	if apiCfg.platform != "dev" {
-		respondWithError(w, 403, "Forbidden")
+	if cfg.platform != "dev" {
+		respondWithError(w, http.StatusForbidden, "Reset is only allowed in dev environment.", nil)
 		return
 	}
 
-	err := apiCfg.db.DeleteUsers(r.Context())
+	cfg.fileserverHits.Store(0)
+
+	err := cfg.db.DeleteUsers(r.Context())
 	if err != nil {
-		log.Printf("Error deleting users: %s", err)
-		w.WriteHeader(500)
+		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to reset the database: %v\n", err), err)
 		return
 	}
 
-	w.WriteHeader(200)
+	respondWithJSON(w, http.StatusOK, map[string]string{
+		"message": "Hits reset to 0 and database reset to initial state.",
+	})
 	return
 }

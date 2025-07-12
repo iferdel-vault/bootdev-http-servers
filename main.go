@@ -72,8 +72,8 @@ func main() {
 	mux.HandleFunc("GET /api/healthz", handlerReadiness)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
-	mux.Handle("POST /api/validate_chirp", middlewareValidateChirp(handlerValidateChirp))
 	mux.HandleFunc("POST /api/users", apiCfg.handlerUsersCreate)
+	mux.Handle("POST /api/chirps", middlewareCreateChirp(apiCfg.handlerChirpsCreate))
 
 	fmt.Printf("serving on port %s\n", port)
 	log.Fatal(server.ListenAndServe())

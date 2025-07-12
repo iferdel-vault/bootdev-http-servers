@@ -5,6 +5,10 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/iferdel-vault/bootdev-http-servers/internal/database"
 )
 
 const ChirpMaxLength = 140
@@ -16,23 +20,30 @@ var ProfaneWords = map[string]bool{
 	"fornax":    true,
 }
 
-// personal challenge: add middleware that logs whatever. maybe current time
-
-func middlewareValidateChirp(next http.HandlerFunc) http.HandlerFunc {
+func middlewareCreateChirp(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("someone asked for a validation of a chirp")
 		next(w, r)
 	}
 }
 
-func handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
+type Chirp struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Body      string    `json:"body"`
+	UserID    uuid.UUID `json:"user_id"`
+}
+
+func (cfg *apiConfig) handlerChirpsCreate(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	type requestBody struct {
-		Body string `json:"body"`
+		Body   string    `json:"body"`
+		UserID uuid.UUID `json:"user_id"`
 	}
 	type responseBody struct {
-		CleanedBody string `json:"cleaned_body"`
+		Chirp
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -49,8 +60,19 @@ func handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cleanedBody := BadWordReplacement(params.Body)
-	respondWithJSON(w, http.StatusOK, responseBody{
-		CleanedBody: cleanedBody,
+	chirp, err := cfg.db.CreateChirp(r.Context(), database.CreateChirpParams{
+		Body:   cleanedBody,
+		UserID: params.UserID,
+	})
+
+	respondWithJSON(w, http.StatusCreated, responseBody{
+		Chirp: Chirp{
+			ID:        chirp.ID,
+			CreatedAt: chirp.CreatedAt,
+			UpdatedAt: chirp.UpdatedAt,
+			Body:      chirp.Body,
+			UserID:    chirp.UserID,
+		},
 	})
 	return
 }

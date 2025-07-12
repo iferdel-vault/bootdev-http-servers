@@ -14,6 +14,7 @@ import (
 )
 
 type apiConfig struct {
+	platform       string
 	fileserverHits atomic.Int32
 	db             *database.Queries
 }
@@ -39,6 +40,11 @@ func main() {
 		log.Fatalf("error reading .env file: %v", err)
 	}
 
+	platform := os.Getenv("PLATFORM")
+	if platform == "" {
+		log.Fatal("PLATFORM must be set")
+	}
+
 	dbURL := os.Getenv("DB_URL")
 	if dbURL == "" {
 		log.Fatal("DB_URL must be set")
@@ -51,6 +57,7 @@ func main() {
 	dbQueries := database.New(dbConn)
 
 	apiCfg := apiConfig{
+		platform:       platform,
 		fileserverHits: atomic.Int32{},
 		db:             dbQueries,
 	}
@@ -64,7 +71,7 @@ func main() {
 	mux.Handle("/app/", http.StripPrefix("/app", apiCfg.middlewareMetricsInc(http.FileServer(http.Dir(filepathRoot)))))
 	mux.HandleFunc("GET /api/healthz", handlerReadiness)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
-	mux.HandleFunc("POST /admin/reset", apiCfg.handlerResetMetrics)
+	mux.HandleFunc("POST /admin/reset", apiCfg.handlerResetUsers)
 	mux.HandleFunc("POST /api/validate_chirp", handlerValidateChirp)
 
 	fmt.Printf("serving on port %s\n", port)

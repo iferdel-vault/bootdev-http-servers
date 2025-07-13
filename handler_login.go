@@ -3,19 +3,24 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/iferdel-vault/bootdev-http-servers/internal/auth"
 )
+
+const expiresIn = time.Hour
 
 func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	type requestBody struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		Email            string         `json:"email"`
+		Password         string         `json:"password"`
+		ExpiresInSeconds *time.Duration `json:"expires_in_seconds"`
 	}
 	type responseBody struct {
 		User
+		Token string
 	}
 
 	params := requestBody{}
@@ -24,6 +29,14 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
 		return
+	}
+
+	// first should authentify...
+	expiresIn := time.Hour
+	if params.ExpiresInSeconds != nil {
+		if *params.ExpiresInSeconds < time.Hour {
+			expiresIn = *params.ExpiresInSeconds
+		}
 	}
 
 	user, err := cfg.db.GetUserByEmail(r.Context(), params.Email)
@@ -38,10 +51,13 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	jwtToken, err := auth.MakeJWT(user.ID, cfg.jwtSecret, expiresIn)
+
 	respondWithJSON(w, http.StatusOK, responseBody{
 		User: User{
 			ID:    user.ID,
 			Email: user.Email,
 		},
+		Token: jwtToken,
 	})
 }

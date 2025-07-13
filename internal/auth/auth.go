@@ -9,18 +9,25 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error) {
+type TokenType string
+
+const (
+	TokenTypeAccess TokenType = "chirpy-access"
+)
+
+func MakeJWT(
+	userID uuid.UUID,
+	tokenSecret string,
+	expiresIn time.Duration,
+) (string, error) {
+	signinKey := []byte(tokenSecret)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-		Issuer:    "chirpy",
+		Issuer:    string(TokenTypeAccess),
 		IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
 		ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(expiresIn)),
 		Subject:   userID.String(),
 	})
-	signedToken, err := token.SignedString([]byte(tokenSecret))
-	if err != nil {
-		return "", err
-	}
-	return signedToken, nil
+	return token.SignedString(signinKey)
 }
 
 func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {

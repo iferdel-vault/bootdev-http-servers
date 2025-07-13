@@ -7,7 +7,6 @@ package database
 
 import (
 	"context"
-	"database/sql"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -24,7 +23,7 @@ RETURNING id, created_at, updated_at, email, hashed_password
 
 type CreateUserParams struct {
 	Email          string
-	HashedPassword sql.NullString
+	HashedPassword string
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -50,14 +49,20 @@ func (q *Queries) DeleteUsers(ctx context.Context) error {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT (id, created_at, updated_at, email, hashed_password)
+SELECT id, created_at, updated_at, email, hashed_password
 FROM users
 WHERE email = $1
 `
 
-func (q *Queries) GetUserByEmail(ctx context.Context, email string) (interface{}, error) {
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
-	var column_1 interface{}
-	err := row.Scan(&column_1)
-	return column_1, err
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Email,
+		&i.HashedPassword,
+	)
+	return i, err
 }

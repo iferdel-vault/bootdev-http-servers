@@ -17,6 +17,7 @@ type apiConfig struct {
 	platform       string
 	fileserverHits atomic.Int32
 	db             *database.Queries
+	jwtSecret      string
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -56,10 +57,16 @@ func main() {
 	}
 	dbQueries := database.New(dbConn)
 
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if platform == "" {
+		log.Fatal("JWT_SECRET must be stated")
+	}
+
 	apiCfg := apiConfig{
 		platform:       platform,
 		fileserverHits: atomic.Int32{},
 		db:             dbQueries,
+		jwtSecret:      jwtSecret,
 	}
 
 	mux := http.NewServeMux() // serve mux is not a multiplexor per-se but a traffic director

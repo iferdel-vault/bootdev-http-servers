@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -31,21 +32,36 @@ func MakeJWT(
 }
 
 func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(t *jwt.Token) (interface{}, error) {
-		return []byte(tokenSecret), nil
-	})
+	claimStruct := jwt.RegisteredClaims{}
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		&claimStruct,
+		func(t *jwt.Token) (interface{}, error) {
+			return []byte(tokenSecret), nil
+		})
 	if err != nil {
 		return uuid.Nil, err
 	}
-	userUUIDString, err := token.Claims.GetSubject()
+
+	userIDString, err := token.Claims.GetSubject()
 	if err != nil {
 		return uuid.Nil, err
 	}
-	userUUID, err := uuid.Parse(userUUIDString)
+
+	issuer, err := token.Claims.GetIssuer()
 	if err != nil {
 		return uuid.Nil, err
 	}
-	return userUUID, nil
+
+	if issuer != string(TokenTypeAccess) {
+		return uuid.Nil, errors.New("invalid issuer")
+	}
+
+	userID, err := uuid.Parse(userIDString)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("invalid user ID: %w", err)
+	}
+	return userID, nil
 }
 
 func HashPassword(password string) (string, error) {

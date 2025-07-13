@@ -17,3 +17,7 @@ go get github.com/lib/pq
 go get github.com/joho/godotenv
 - create the .env and put things such as
   - DB_URL="YOUR_CONNECTION_STRING_HERE?sslmode=disable"
+
+## authentication
+go get golang.org/x/crypto/bcrypt
+go get -u github.com/golang-jwt/jwt/v5

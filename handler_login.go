@@ -31,14 +31,6 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// first should authentify...
-	expiresIn := time.Hour
-	if params.ExpiresInSeconds != nil {
-		if *params.ExpiresInSeconds < time.Hour {
-			expiresIn = *params.ExpiresInSeconds
-		}
-	}
-
 	user, err := cfg.db.GetUserByEmail(r.Context(), params.Email)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "A user with that email does not exists", err)
@@ -49,6 +41,13 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Incorrect email or password", err)
 		return
+	}
+
+	expiresIn := time.Hour
+	if params.ExpiresInSeconds != nil {
+		if *params.ExpiresInSeconds < time.Hour {
+			expiresIn = *params.ExpiresInSeconds
+		}
 	}
 
 	jwtToken, err := auth.MakeJWT(user.ID, cfg.jwtSecret, expiresIn)

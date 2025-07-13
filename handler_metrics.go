@@ -6,6 +6,8 @@ import (
 )
 
 func (apiCfg *apiConfig) handlerMetrics(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
 	metrics := apiCfg.fileserverHits.Load()
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)

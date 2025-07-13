@@ -8,41 +8,51 @@ import (
 )
 
 func TestValidateJWT(t *testing.T) {
-	const tokenSecret = "a"
-	userUUID := uuid.New()
+	userID := uuid.New()
+	validToken, _ := MakeJWT(userID, "secret", time.Hour)
+	expiredToken, _ := MakeJWT(userID, "secret", -time.Hour)
 
 	tests := map[string]struct {
-		UserID      uuid.UUID
-		expiresIn   time.Duration
+		tokenString string
 		tokenSecret string
-		WantErr     bool
+		wantUserID  uuid.UUID
+		wantErr     bool
 	}{
-		"right token": {
-			UserID:      userUUID,
-			tokenSecret: tokenSecret,
-			expiresIn:   time.Hour * 1,
-			WantErr:     false,
+		"valid token": {
+			tokenString: validToken,
+			tokenSecret: "secret",
+			wantUserID:  userID,
+			wantErr:     false,
 		},
 		"wrong token": {
-			UserID:      userUUID,
-			tokenSecret: "badtoken",
-			expiresIn:   time.Hour * 1,
-			WantErr:     true,
+			tokenString: "invalid.token.string",
+			tokenSecret: "secret",
+			wantUserID:  uuid.Nil,
+			wantErr:     true,
+		},
+		"wrong secret": {
+			tokenString: validToken,
+			tokenSecret: "wrong_secret",
+			wantUserID:  uuid.Nil,
+			wantErr:     true,
 		},
 		"expired token": {
-			UserID:      userUUID,
-			tokenSecret: tokenSecret,
-			expiresIn:   -time.Hour * 1,
-			WantErr:     true,
+			tokenString: expiredToken,
+			tokenSecret: "secret",
+			wantUserID:  uuid.Nil,
+			wantErr:     true,
 		},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			token, _ := MakeJWT(tc.UserID, tc.tokenSecret, tc.expiresIn)
-			userID, _ := ValidateJWT(token, tokenSecret)
-			if (userID != tc.UserID) != tc.WantErr {
-				t.Errorf("WantErr is %v --> got %v, want %v", tc.WantErr, userID, tc.UserID)
+			gotUserID, err := ValidateJWT(tc.tokenString, tc.tokenSecret)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("ValidateJWT() error = %v, wantErr %v", err, tc.wantErr)
+				return
+			}
+			if gotUserID != tc.wantUserID {
+				t.Errorf("ValidateJWT() gotUserID = %v, want %v", gotUserID, tc.wantUserID)
 			}
 		})
 	}

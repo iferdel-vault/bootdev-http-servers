@@ -4,6 +4,16 @@ import (
 	"net/http"
 )
 
+func (cfg *apiConfig) handlerChirpsGet(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	chirpID := r.PathValue("ChirpID")
+	if chirpID == "" {
+		respondWithError(w, http.StatusBadRequest, "The chirp ID should be in the path", nil)
+	}
+
+}
+
 func (cfg *apiConfig) handlerChirpsRetrieve(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 

@@ -48,12 +48,10 @@ func (apiCfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Reque
 	}
 
 	user, err := apiCfg.db.CreateUser(r.Context(), database.CreateUserParams{
-		Email: params.Email,
-		HashedPassword: sql.NullString{
-			String: hashedPassword,
-			Valid:  true,
-		},
-	})
+		Email:          params.Email,
+		HashedPassword: hashedPassword,
+	},
+	)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create user", err)
 		return

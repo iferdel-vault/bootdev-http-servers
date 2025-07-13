@@ -8,40 +8,44 @@ import (
 )
 
 func TestValidateJWT(t *testing.T) {
-	const expiresIn = time.Hour * 1
 	const tokenSecret = "a"
 	userUUID := uuid.New()
 
 	tests := map[string]struct {
 		UserID      uuid.UUID
-		ExpectedErr bool
+		expiresIn   time.Duration
+		tokenSecret string
+		WantErr     bool
 	}{
 		"right token": {
 			UserID:      userUUID,
-			ExpectedErr: false,
+			tokenSecret: tokenSecret,
+			expiresIn:   time.Hour * 1,
+			WantErr:     false,
 		},
-		// "wrong token -> user": {
-		// 	UserID:      uuid.New(),
-		// 	ExpectedErr: false,
-		// },
+		"wrong token": {
+			UserID:      userUUID,
+			tokenSecret: "badtoken",
+			expiresIn:   time.Hour * 1,
+			WantErr:     true,
+		},
+		"expired token": {
+			UserID:      userUUID,
+			tokenSecret: tokenSecret,
+			expiresIn:   -time.Hour * 1,
+			WantErr:     true,
+		},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			token, err := MakeJWT(tc.UserID, tokenSecret, expiresIn)
-			if (err != nil) != tc.ExpectedErr {
-				t.Fatalf("Error on making JWT: %v", err)
-			}
-			userID, err := ValidateJWT(token, tokenSecret)
-			if (err != nil) != tc.ExpectedErr {
-				t.Fatalf("Error on validation JWT: %v", err)
-			}
-			if userID != tc.UserID {
-				t.Fatalf("got %v, want %v", userID, tc.UserID)
+			token, _ := MakeJWT(tc.UserID, tc.tokenSecret, tc.expiresIn)
+			userID, _ := ValidateJWT(token, tokenSecret)
+			if (userID != tc.UserID) != tc.WantErr {
+				t.Errorf("WantErr is %v --> got %v, want %v", tc.WantErr, userID, tc.UserID)
 			}
 		})
 	}
-
 }
 
 func TestCheckPasswordHash(t *testing.T) {

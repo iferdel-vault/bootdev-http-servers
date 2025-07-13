@@ -76,6 +76,7 @@ func main() {
 	mux.Handle("POST /api/chirps", middlewareCreateChirp(apiCfg.handlerChirpsCreate))
 	mux.HandleFunc("GET /api/chirps", apiCfg.handlerChirpsRetrieve)
 	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerChirpsGet)
+	mux.HandleFunc("POST /api/login", apiCfg.handlerLogin)
 
 	fmt.Printf("serving on port %s\n", port)
 	log.Fatal(server.ListenAndServe())

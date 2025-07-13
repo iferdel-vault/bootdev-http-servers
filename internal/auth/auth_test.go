@@ -2,7 +2,47 @@ package auth
 
 import (
 	"testing"
+	"time"
+
+	"github.com/google/uuid"
 )
+
+func TestValidateJWT(t *testing.T) {
+	const expiresIn = time.Hour * 1
+	const tokenSecret = "a"
+	userUUID := uuid.New()
+
+	tests := map[string]struct {
+		UserID      uuid.UUID
+		ExpectedErr bool
+	}{
+		"right token": {
+			UserID:      userUUID,
+			ExpectedErr: false,
+		},
+		// "wrong token -> user": {
+		// 	UserID:      uuid.New(),
+		// 	ExpectedErr: false,
+		// },
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			token, err := MakeJWT(tc.UserID, tokenSecret, expiresIn)
+			if (err != nil) != tc.ExpectedErr {
+				t.Fatalf("Error on making JWT: %v", err)
+			}
+			userID, err := ValidateJWT(token, tokenSecret)
+			if (err != nil) != tc.ExpectedErr {
+				t.Fatalf("Error on validation JWT: %v", err)
+			}
+			if userID != tc.UserID {
+				t.Fatalf("got %v, want %v", userID, tc.UserID)
+			}
+		})
+	}
+
+}
 
 func TestCheckPasswordHash(t *testing.T) {
 	password1 := "correctPassword123!"

@@ -20,7 +20,7 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	type responseBody struct {
 		User
-		Token string
+		Token string `json:"token"`
 	}
 
 	params := requestBody{}

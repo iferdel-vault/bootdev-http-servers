@@ -46,6 +46,11 @@ func main() {
 		log.Fatal("PLATFORM must be set")
 	}
 
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if platform == "" {
+		log.Fatal("JWT_SECRET must be stated")
+	}
+
 	dbURL := os.Getenv("DB_URL")
 	if dbURL == "" {
 		log.Fatal("DB_URL must be set")
@@ -56,11 +61,6 @@ func main() {
 		log.Fatalf("error opening connection to db: %v", err)
 	}
 	dbQueries := database.New(dbConn)
-
-	jwtSecret := os.Getenv("JWT_SECRET")
-	if platform == "" {
-		log.Fatal("JWT_SECRET must be stated")
-	}
 
 	apiCfg := apiConfig{
 		platform:       platform,

@@ -46,13 +46,13 @@ func (cfg *apiConfig) handlerChirpsCreate(w http.ResponseWriter, r *http.Request
 		Chirp
 	}
 
-	tokenString, err := auth.GetBearerToken(r.Header)
+	token, err := auth.GetBearerToken(r.Header)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Something went wrong with the token verification from the header content of the request", err)
 		return
 	}
 
-	userID, err := auth.ValidateJWT(tokenString, cfg.jwtSecret)
+	userID, err := auth.ValidateJWT(token, cfg.jwtSecret)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Unauthorized...", err)
 		return

@@ -3,7 +3,6 @@ package auth
 import (
 	"errors"
 	"fmt"
-	"go/token"
 	"net/http"
 	"strings"
 	"time"

@@ -3,6 +3,9 @@ package auth
 import (
 	"errors"
 	"fmt"
+	"go/token"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -15,6 +18,16 @@ type TokenType string
 const (
 	TokenTypeAccess TokenType = "chirpy-access"
 )
+
+func GetBearerToken(headers http.Header) (string, error) {
+	authHeader := headers.Get("Authorization")
+	authHeaderNoBearer, found := strings.CutPrefix(authHeader, "Bearer")
+	if !found {
+		return "", errors.New("expected to find Bearer string in Authorization header")
+	}
+	tokenString := strings.TrimSpace(authHeaderNoBearer)
+	return tokenString, nil
+}
 
 func MakeJWT(
 	userID uuid.UUID,

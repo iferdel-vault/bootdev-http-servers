@@ -21,3 +21,5 @@ go get github.com/joho/godotenv
 ## authentication
 go get golang.org/x/crypto/bcrypt
 go get -u github.com/golang-jwt/jwt/v5
+https://golang-jwt.github.io/jwt/usage/signing_methods/#signing-methods-and-key-types
+https://jwt.io/

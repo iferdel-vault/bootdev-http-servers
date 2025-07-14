@@ -18,13 +18,18 @@ const (
 	TokenTypeAccess TokenType = "chirpy-access"
 )
 
+var ErrNoAuthHeaderIncluded = errors.New("no auth header included in request")
+
 func GetBearerToken(headers http.Header) (string, error) {
 	authHeader := headers.Get("Authorization")
-	authHeaderNoBearer, found := strings.CutPrefix(authHeader, "Bearer")
-	if !found {
-		return "", errors.New("expected to find Bearer string in Authorization header")
+	if authHeader == "" {
+		return "", ErrNoAuthHeaderIncluded
 	}
-	tokenString := strings.TrimSpace(authHeaderNoBearer)
+	splitAuth := strings.Split(authHeader, " ")
+	if len(splitAuth) < 2 || splitAuth[0] != "Bearer" {
+		return "", errors.New("malformed authorization header")
+	}
+	tokenString := splitAuth[1]
 	return tokenString, nil
 }
 

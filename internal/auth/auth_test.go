@@ -1,11 +1,53 @@
 package auth
 
 import (
+	"net/http"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+func TestGetBearerToken(t *testing.T) {
+	tests := map[string]struct {
+		headers   http.Header
+		wantToken string
+		wantErr   bool
+	}{
+		"Valid Bearer token": {
+			headers: http.Header{
+				"Authorization": []string{"Bearer valid_token"},
+			},
+			wantToken: "valid_token",
+			wantErr:   false,
+		},
+		"Missing Authorization header": {
+			headers:   http.Header{},
+			wantToken: "",
+			wantErr:   true,
+		},
+		"Malformed Authorization header": {
+			headers: http.Header{
+				"Authorization": []string{"InvalidBearer token"},
+			},
+			wantToken: "",
+			wantErr:   true,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			gotToken, err := GetBearerToken(tc.headers)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("GetBearerToken() error = %v, wantErr %v", err, tc.wantErr)
+				return
+			}
+			if gotToken != tc.wantToken {
+				t.Errorf("GetBearerToken() gotToken = %v, want %v", gotToken, tc.wantToken)
+			}
+		})
+	}
+}
 
 func TestValidateJWT(t *testing.T) {
 	userID := uuid.New()

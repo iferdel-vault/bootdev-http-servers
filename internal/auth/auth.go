@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/http"
@@ -19,6 +21,13 @@ const (
 )
 
 var ErrNoAuthHeaderIncluded = errors.New("no auth header included in request")
+
+func MakeRefreshToken() (string, error) {
+	key := make([]byte, 32)
+	rand.Read(key)
+	refreshToken := hex.EncodeToString([]byte(key))
+	return refreshToken, nil
+}
 
 func GetBearerToken(headers http.Header) (string, error) {
 	authHeader := headers.Get("Authorization")

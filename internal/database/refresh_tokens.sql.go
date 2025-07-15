@@ -73,23 +73,24 @@ func (q *Queries) GetRefreshToken(ctx context.Context, token string) (RefreshTok
 }
 
 const getUserFromRefreshToken = `-- name: GetUserFromRefreshToken :one
-SELECT u.id, u.created_at, u.updated_at, u.email, u.hashed_password
+SELECT u.id, u.email
 FROM refresh_tokens rt
 INNER JOIN users u
 ON rt.user_id = u.id
 WHERE rt.token = $1
+AND rt.expires_at > NOW()
+AND rt.revoked_at IS NULL
 `
 
-func (q *Queries) GetUserFromRefreshToken(ctx context.Context, token string) (User, error) {
+type GetUserFromRefreshTokenRow struct {
+	ID    uuid.UUID
+	Email string
+}
+
+func (q *Queries) GetUserFromRefreshToken(ctx context.Context, token string) (GetUserFromRefreshTokenRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserFromRefreshToken, token)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.Email,
-		&i.HashedPassword,
-	)
+	var i GetUserFromRefreshTokenRow
+	err := row.Scan(&i.ID, &i.Email)
 	return i, err
 }
 

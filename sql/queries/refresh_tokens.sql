@@ -21,8 +21,10 @@ SET (revoked_at, updated_at) = (NOW(), NOW())
 WHERE token = $1;
 
 -- name: GetUserFromRefreshToken :one
-SELECT u.*
+SELECT u.id, u.email
 FROM refresh_tokens rt
 INNER JOIN users u
 ON rt.user_id = u.id
-WHERE rt.token = $1;
+WHERE rt.token = $1
+AND rt.expires_at > NOW()
+AND rt.revoked_at IS NULL;

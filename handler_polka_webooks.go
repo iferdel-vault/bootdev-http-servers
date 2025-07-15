@@ -36,7 +36,11 @@ func (cfg *apiConfig) handlerPolkaWebhooks(w http.ResponseWriter, r *http.Reques
 		ID:          params.Data.UserID,
 	})
 	if err != nil {
-		respondWithError(w, http.StatusNotFound, "Couldn't update chirpy red on user since user is not found", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			respondWithError(w, http.StatusNotFound, "Couldn't find user", err)
+			return
+		}
+		respondWithError(w, http.StatusInternalServerError, "Couldn't update user", err)
 		return
 	}
 

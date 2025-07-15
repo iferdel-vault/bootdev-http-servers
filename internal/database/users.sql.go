@@ -7,7 +7,6 @@ package database
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -107,7 +106,7 @@ RETURNING id, created_at, updated_at, email, hashed_password, is_chirpy_red
 `
 
 type UpdateUserIsChirpyRedParams struct {
-	IsChirpyRed sql.NullBool
+	IsChirpyRed bool
 	ID          uuid.UUID
 }
 

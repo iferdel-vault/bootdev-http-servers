@@ -8,6 +8,11 @@ import (
 
 func (cfg *apiConfig) handlerRefresh(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
+
+	type responseBody struct {
+		Token string `json:"token"`
+	}
+
 	token, err := auth.GetBearerToken(r.Header)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't get bearer token from Header", err)
@@ -23,9 +28,7 @@ func (cfg *apiConfig) handlerRefresh(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create access JWT", err)
 		return
 	}
-	respondWithJSON(w, http.StatusOK, struct {
-		Token string `json:"token"`
-	}{
+	respondWithJSON(w, http.StatusOK, responseBody{
 		Token: accessToken,
 	})
 }

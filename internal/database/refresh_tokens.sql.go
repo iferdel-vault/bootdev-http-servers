@@ -8,6 +8,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -28,7 +29,7 @@ RETURNING token, created_at, updated_at, user_id, expires_at, revoked_at
 type CreateRefreshTokenParams struct {
 	Token     string
 	UserID    uuid.UUID
-	ExpiresAt sql.NullTime
+	ExpiresAt time.Time
 	RevokedAt sql.NullTime
 }
 

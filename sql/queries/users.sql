@@ -16,3 +16,9 @@ DELETE FROM users;
 SELECT id, created_at, updated_at, email, hashed_password
 FROM users
 WHERE email = $1;
+
+-- name: UpdateUserEmailAndPassword :one
+UPDATE users
+SET (email, hashed_password) = ($1, $2)
+WHERE id = $1
+RETURNING *;

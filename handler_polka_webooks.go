@@ -1,10 +1,13 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/iferdel-vault/bootdev-http-servers/internal/auth"
 	"github.com/iferdel-vault/bootdev-http-servers/internal/database"
 )
 
@@ -18,9 +21,20 @@ func (cfg *apiConfig) handlerPolkaWebhooks(w http.ResponseWriter, r *http.Reques
 		} `json:"data"`
 	}
 
+	requestAPIKey, err := auth.GetAPIKey(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Something went wrong getting API key from request header", err)
+		return
+	}
+
+	if requestAPIKey != cfg.polkaKey {
+		respondWithError(w, http.StatusUnauthorized, "Unauthorized...", err)
+		return
+	}
+
 	params := requestBody{}
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Something went wrong decoding request", err)
 		return
